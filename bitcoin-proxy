@@ -1,0 +1,62 @@
+#!/bin/bash
+
+PORT=8333
+ADDRESS=0.0.0.0
+MAXCON=100
+
+while test $# -gt 0; do
+	case "$1" in
+		-h|--help)
+			echo "bitcoin-proxy - simple ncat based proxy with bitcoind defaults"
+			echo " "
+			echo "bitcoin-proxy [options] host [port]"
+			echo " "
+			echo "options:"
+			echo "-h, --help     show this help"
+			echo "-p, --port     listening port"
+			echo "-a, --address  listening address"
+			echo "-m, --max-con  maximum number of connections"
+			exit 0
+			;;
+		-p|--port)
+			shift
+			PORT=$1
+			shift
+			;;
+		-a|--address)
+			shift
+			ADDRESS=$1
+			shift
+			;;
+		-m|--max-con)
+			shift
+			MAXCON=$1
+			shift
+			;;
+		*)
+			break
+			;;
+	esac
+done
+
+TARGET_HOST=$1
+TARGET_PORT=${2:-8333}
+
+if test ! -x /usr/bin/ncat; then
+	echo "ncat not found in the system"
+	echo "try: apt-get install nmap"
+	exit 1
+fi
+
+if test -z "$TARGET_HOST"; then
+	echo "error: target host not specified"
+	exit 1
+fi
+
+re='^[0-9]+$'
+if [[ $TARGET_HOST =~ $re ]] ; then
+	echo "error: missing target host"
+	exit 1
+fi
+
+ncat --sh-exec "ncat $TARGET_HOST $TARGET_PORT" -l --keep-open $ADDRESS $PORT
